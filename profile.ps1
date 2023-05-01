@@ -10,24 +10,24 @@ $PSDefaultParameterValues = @{
 #region Variables
 #$ Setup some session-based environment variables
 $env:PSCP = 'C:\PortableApps\PortableApps\PuTTYPortable\App\putty\pscp.exe'
-$PSStyle.OutputRendering = [System.Management.Automation.OutputRendering]::Host
+if ($PSVersionTable.psedition -eq 'Core') { $PSStyle.OutputRendering = [System.Management.Automation.OutputRendering]::Host }
 
 ##### Trim $env:psmodulepath to only those I know have modules needed
-$psModulePath = @(
-    'C:\Program Files\PowerShell\Modules'
-    'C:\program files\powershell\7\Modules'
-    'C:\Program Files\WindowsPowerShell\Modules'
-    'C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules'
-    'C:\github'
-)
-$env:psmodulepath = ($psModulePath -join ';')
+# $psModulePath = @(
+#     'C:\Program Files\PowerShell\Modules'
+#     'C:\program files\powershell\7\Modules'
+#     'C:\Program Files\WindowsPowerShell\Modules'
+#     'C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules'
+#     'C:\github'
+# )
+# $env:psmodulepath = ($psModulePath -join ';')
 
 $CmdPromptUser = [Security.Principal.WindowsIdentity]::GetCurrent()
 $CmdDate = Get-Date
 #endregion Variables
 
 #region Custom Module Imports
-Import-Module 'C:\Github\MessKit\MessKit.psm1' -Force
+Import-Module 'C:\Github\MessBuild\MessBuild.psm1' -Force
 #endregion
 
 #region Functions
@@ -36,6 +36,7 @@ Function F5Data: { Set-Location 'C:\Github\f5-data' }
 Function F5Pester: { Set-Location 'C:\Github\f5-pester' }
 Function F5Pwsh: { Set-Location 'C:\Github\f5-pwsh' }
 Function F5Terraform: { Set-Location 'C:\Github\f5-terraform' }
+Function MessBuild: { Set-Location 'C:\GitHub\MessBuild' }
 Function MessKit: { Set-Location 'C:\GitHub\MessKit' }
 Function Hosts: { Set-Location 'C:\windows\system32\drivers\etc\hosts' }
 #endregion
@@ -63,12 +64,13 @@ Function Set-CustomDirectory {
 
     Process {
         $CustomDirectories = @{
-            'C:\GitHub\f5-ansible'      = 'F5Ansible'
-            'C:\GitHub\f5-data'         = 'F5Data'
-            'C:\GitHub\f5-pester'       = 'F5Pester'
-            'C:\GitHub\f5-pwsh'         = 'F5Pwsh'
-            'C:\GitHub\f5-terraform'    = 'F5Terraform'
-            'C:\GitHub\MessKit'         = 'MessKit'
+            'C:\GitHub\f5-ansible'   = 'F5Ansible'
+            'C:\GitHub\f5-data'      = 'F5Data'
+            'C:\GitHub\f5-pester'    = 'F5Pester'
+            'C:\GitHub\f5-pwsh'      = 'F5Pwsh'
+            'C:\GitHub\f5-terraform' = 'F5Terraform'
+            'C:\GitHub\MessBuild'    = 'MessBuild'
+            'C:\GitHub\MessKit'      = 'MessKit'
         }
 
         Foreach ($Item in $Path) {
@@ -119,6 +121,6 @@ Function Prompt {
     Write-Host "[$($CmdPromptUser.Name.tolower())] [$(Set-CustomDirectory)] " -ForegroundColor $fgColor -NoNewline
     Write-Host "[$(Get-Date $CmdDate -Format 'dddd hh:mm:ss tt')]" -ForegroundColor $fgColor
 
-    return ' '
+    #return ' '
 }
 #endregion
