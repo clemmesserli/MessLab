@@ -8,37 +8,22 @@ $PSDefaultParameterValues = @{
 #endregion PSDefaultParams
 
 #region Variables
-#$ Setup some session-based environment variables
-$env:PSCP = 'C:\PortableApps\PortableApps\PuTTYPortable\App\putty\pscp.exe'
-if ($PSVersionTable.psedition -eq 'Core') { $PSStyle.OutputRendering = [System.Management.Automation.OutputRendering]::Host }
-
-##### Trim $env:psmodulepath to only those I know have modules needed
-# $psModulePath = @(
-#     'C:\Program Files\PowerShell\Modules'
-#     'C:\program files\powershell\7\Modules'
-#     'C:\Program Files\WindowsPowerShell\Modules'
-#     'C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules'
-#     'C:\github'
-# )
-# $env:psmodulepath = ($psModulePath -join ';')
+if ($PSVersionTable.psedition -eq 'Core') {
+    $PSStyle.OutputRendering = [System.Management.Automation.OutputRendering]::Host
+}
 
 $CmdPromptUser = [Security.Principal.WindowsIdentity]::GetCurrent()
 $CmdDate = Get-Date
 #endregion Variables
 
 #region Custom Module Imports
-Import-Module 'C:\Github\MessBuild\MessBuild.psm1' -Force
+Import-Module 'C:\Github\MessKit\MessKit.psm1' -Force
 #endregion
 
 #region Functions
-Function F5Ansible: { Set-Location 'C:\Github\f5-ansible' }
-Function F5Data: { Set-Location 'C:\Github\f5-data' }
-Function F5Pester: { Set-Location 'C:\Github\f5-pester' }
-Function F5Pwsh: { Set-Location 'C:\Github\f5-pwsh' }
-Function F5Terraform: { Set-Location 'C:\Github\f5-terraform' }
-Function MessBuild: { Set-Location 'C:\GitHub\MessBuild' }
-Function MessKit: { Set-Location 'C:\GitHub\MessKit' }
 Function Hosts: { Set-Location 'C:\windows\system32\drivers\etc\hosts' }
+Function MessKit: { Set-Location 'C:\GitHub\MessKit' }
+Function MessLab: { Set-Location 'C:\GitHub\MessLab' }
 #endregion
 
 #region IsAdmin
@@ -48,12 +33,6 @@ $IsAdmin = (New-Object Security.Principal.WindowsPrincipal ([Security.Principal.
 
 #region Prompt
 Function Set-CustomDirectory {
-    <#
-	.SYNOPSIS
-		Set custom prompt
-	.DESCRIPTION
-		Set custom prompt to shorten path in terminal based on a simple hashtable lookup
-	#>
     [CmdletBinding()]
     [OutputType([String])]
     Param
@@ -62,41 +41,33 @@ Function Set-CustomDirectory {
         $Path = $PWD.Path
     )
 
-    Process {
-        $CustomDirectories = @{
-            'C:\GitHub\f5-ansible'   = 'F5Ansible'
-            'C:\GitHub\f5-data'      = 'F5Data'
-            'C:\GitHub\f5-pester'    = 'F5Pester'
-            'C:\GitHub\f5-pwsh'      = 'F5Pwsh'
-            'C:\GitHub\f5-terraform' = 'F5Terraform'
-            'C:\GitHub\MessBuild'    = 'MessBuild'
-            'C:\GitHub\MessKit'      = 'MessKit'
-        }
+    $CustomDirectories = @{
+        'C:\GitHub\MessLab' = 'MessLab'
+        'C:\GitHub\MessKit' = 'MessKit'
+    }
 
-        Foreach ($Item in $Path) {
-            $Match = ($CustomDirectories.GetEnumerator().name |
+    Foreach ($Item in $Path) {
+        $Match = ($CustomDirectories.GetEnumerator().name |
                 Where-Object { $Item -eq "$_" -or $Item -like "$_*" } |
-                Select-Object @{n = 'Directory'; e = { $_ } }, @{n = 'Length'; e = { $_.length } } |
-                Sort-Object Length -Descending |
-                Select-Object -First 1).directory
+                    Select-Object @{n = 'Directory'; e = { $_ } }, @{n = 'Length'; e = { $_.length } } |
+                        Sort-Object Length -Descending |
+                            Select-Object -First 1).directory
 
-            If ($Match) {
-                [String]($Item -replace [regex]::Escape($Match), $CustomDirectories[$Match])
-            } ElseIf ($PWD.Pathh -ne $Item) {
-                $Item
-            } Else {
-                $PWD.Path
-            }
+        If ($Match) {
+            [String]($Item -replace [regex]::Escape($Match), $CustomDirectories[$Match])
+        } ElseIf ($PWD.Pathh -ne $Item) {
+            $Item
+        } Else {
+            $PWD.Path
         }
     }
-    End { }
 }
 
 Function Prompt {
     $Host.UI.RawUI.WindowTitle = 'PowerShell {0}' -f $PSVersionTable.PSVersion.ToString() + ' [' + (Get-Location) + ']'
 
     #$CmdPromptCurrentFolder = Split-Path -Path $pwd -Leaf
-    $CmdPromptUser = [Security.Principal.WindowsIdentity]::GetCurrent();
+    $CmdPromptUser = [Security.Principal.WindowsIdentity]::GetCurrent()
     $CmdDate = Get-Date -Format 'dddd hh:mm:ss tt'
 
     #region History
@@ -120,7 +91,5 @@ Function Prompt {
     }
     Write-Host "[$($CmdPromptUser.Name.tolower())] [$(Set-CustomDirectory)] " -ForegroundColor $fgColor -NoNewline
     Write-Host "[$(Get-Date $CmdDate -Format 'dddd hh:mm:ss tt')]" -ForegroundColor $fgColor
-
-    #return ' '
 }
 #endregion
