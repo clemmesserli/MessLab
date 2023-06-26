@@ -17,13 +17,13 @@ $CmdDate = Get-Date
 #endregion Variables
 
 #region Custom Module Imports
-Import-Module 'C:\Github\clemmesserli\MessKit\MessKit.psm1' -Force
+Import-Module 'C:\Github\MessKit\MessKit.psm1' -Force
 #endregion
 
 #region Functions
 Function Hosts: { Set-Location 'C:\windows\system32\drivers\etc\hosts' }
-Function MessKit: { Set-Location 'C:\GitHub\clemmesserli\MessKit' }
-Function MessLab: { Set-Location 'C:\GitHub\clemmesserli\MessLab' }
+Function MessKit: { Set-Location 'C:\GitHub\MessKit' }
+Function MessLab: { Set-Location 'C:\GitHub\MessLab' }
 #endregion
 
 #region IsAdmin
@@ -42,8 +42,8 @@ Function Set-CustomDirectory {
     )
 
     $CustomDirectories = @{
-        'C:\GitHub\clemmesserli\MessLab' = 'MessLab'
-        'C:\GitHub\clemmesserli\MessKit' = 'MessKit'
+        'C:\GitHub\MessLab' = 'MessLab'
+        'C:\GitHub\MessKit' = 'MessKit'
     }
 
     Foreach ($Item in $Path) {
