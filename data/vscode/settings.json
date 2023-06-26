@@ -88,7 +88,7 @@
   "terminal.integrated.fontSize": 14,
   "terminal.integrated.fontWeight": "normal",
   "terminal.integrated.gpuAcceleration": "auto",
-  "terminal.external.windowsExec": "C:\\Users\\cmesserli\\AppData\\Local\\Microsoft\\WindowsApps\\wt.exe",
+  "terminal.external.windowsExec": "wt.exe",
   "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": true,
   "typescript.format.insertSpaceBeforeAndAfterBinaryOperators": false,
   "typescript.format.insertSpaceAfterSemicolonInForStatements": true,
