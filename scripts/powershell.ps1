@@ -7,24 +7,25 @@ $data = Invoke-RestMethod 'https://raw.githubusercontent.com/clemmesserli/MessLa
 $data | Out-File 'C:\github\profile.ps1' -Encoding utf8
 
 $files = @(
-    "C:\Program Files\PowerShell\7\profile.ps1"
-    "C:\Program Files\PowerShell\7\Microsoft.PowerShell_profile.ps1"
-
-    "C:\Windows\System32\WindowsPowerShell\v1.0\Microsoft.PowerShell_profile.ps1"
-    "C:\Windows\System32\WindowsPowerShell\v1.0\Microsoft.PowerShellISE_profile.ps1"
-    "C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1"
-
-    "$($env:onedrive)\PowerShell\Microsoft.PowerShell_profile.ps1"
-    "$($env:onedrive)\PowerShell\profile.ps1"
-    "$($env:onedrive)\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
-    "$($env:onedrive)\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1"
-    "$($env:onedrive)\WindowsPowerShell\profile.ps1"
+    "$($env:onedrive)\Documents\PowerShell\Microsoft.PowerShell_profile.ps1"
+    "$($env:onedrive)\Documents\PowerShell\Microsoft.PowerShellISE_profile.ps1"
+    "$($env:onedrive)\Documents\PowerShell\profile.ps1"
+    "$($env:onedrive)\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+    "$($env:onedrive)\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1"
+    "$($env:onedrive)\Documents\WindowsPowerShell\profile.ps1"
+    
+    "$($env:OneDriveConsumer)\Documents\PowerShell\Microsoft.PowerShell_profile.ps1"
+    "$($env:OneDriveConsumer)\Documents\PowerShell\Microsoft.PowerShellISE_profile.ps1"
+    "$($env:OneDriveConsumer)\Documents\PowerShell\profile.ps1"
+    "$($env:OneDriveConsumer)\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+    "$($env:OneDriveConsumer)\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1"
+    "$($env:OneDriveConsumer)\Documents\WindowsPowerShell\profile.ps1"
 )
 
 foreach ($file in $files) {
     #$file = $files[2]
     try {
-        Set-Content -Value '. C:\github\profile.ps1' -Path $file -Force -ErrorAction Stop
+        Set-Content -Value '. C:\github\profile.ps1' -Path "$file" -Force -ErrorAction Stop
     } catch {
         Write-Error "$($file) does not exist"
     }
