@@ -1,4 +1,5 @@
 {
+  "diffEditor.hideUnchangedRegions.enabled": true,
   "editor.accessibilitySupport": "off",
   "editor.autoIndent": "full",
   "editor.bracketPairColorization.enabled": true,
@@ -22,6 +23,7 @@
   "editor.wordWrap": "off",
   "emmet.triggerExpansionOnTab": true,
   "explorer.confirmDragAndDrop": false,
+  "explorer.copyRelativePathSeparator": "/",
   "files.associations": {
     "ansible.cfg": "ini",
     "hosts": "ini",
@@ -95,10 +97,11 @@
   "typescript.format.insertSpaceAfterKeywordsInControlFlowStatements": true,
   "typescript.format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": true,
   "typescript.format.insertSpaceAfterCommaDelimiter": true,
+  "vsicons.dontShowNewVersionMessage": true,
   "window.restoreFullscreen": true,
   "workbench.activityBar.visible": true,
   "workbench.commandPalette.preserveInput": false,
-  "workbench.colorTheme": "Default Dark+ Experimental",
+  "workbench.colorTheme": "Default Dark Modern",
   "workbench.sideBar.location": "left",
   "workbench.startupEditor": "none",
   "[yaml]": {
