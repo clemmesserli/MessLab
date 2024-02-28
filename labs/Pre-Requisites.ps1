@@ -17,6 +17,16 @@ if ($LabDrive) {
 # Copy desired ISO files to
 Copy-Item "$($env:onedrive)\LabSources\ISOs" "$(Get-LabSourcesLocation)\ISOs"
 
+
+#region Update SoftwarePackages
+$progressPreference = 'silentlyContinue'
+$latestWingetMsixBundleUri = $(Invoke-RestMethod https://api.github.com/repos/microsoft/winget-cli/releases/latest).assets.browser_download_url | Where-Object {$_.EndsWith(".msixbundle")}
+$latestWingetMsixBundle = $latestWingetMsixBundleUri.Split("/")[-1]
+Write-Information "Downloading winget to artifacts directory..."
+Invoke-WebRequest -Uri $latestWingetMsixBundleUri -OutFile "$(Get-LabSourcesLocation)\SoftwarePackages\$latestWingetMsixBundle"
+Invoke-WebRequest -Uri https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx -OutFile "$(Get-LabSourcesLocation)\SoftwarePackages\Microsoft.VCLibs.x64.14.00.Desktop.appx"
+#endregion
+
 # Check to see what is available
 $OSOptions = (Get-LabAvailableOperatingSystem).OperatingSystemName
 $OSOptions
