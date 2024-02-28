@@ -72,10 +72,13 @@ Begin {
 Process {
 	if (-not($PSBoundParameters.ContainsKey('Credential'))) {
 		# Attempt to fetch default cred from Microsoft.PowerShell.SecretStore or prompt for user input if it needs unlocked
-		$Credential = (Get-Secret -Vault MessLabs -Name LabAdmin -ErrorAction Stop)
-	} else {
-		Write-Error "Unable to pre-set credentials.  Aborting lab creation!"
-	}
+		try { 
+			$Credential = (Get-Secret -Vault MessLabs -Name LabAdmin -ErrorAction Stop)
+		} catch {
+			Write-Error "Unable to pre-set credentials.  Aborting lab creation!"
+			break
+		}
+	} 
 	New-LabDefinition -VmPath $VmPath -Name $LabName -DefaultVirtualizationEngine HyperV
 
 	# define our default user credential
