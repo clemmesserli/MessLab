@@ -84,6 +84,8 @@
   "prettier.singleQuote": true,
   "prettier.tabWidth": 2,
   "redhat.telemetry.enabled": false,
+  "security.workspace.trust.untrustedFiles": "open",
+  "security.workspace.trust.enabled": true,
   "telemetry.telemetryLevel": "off",
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "terminal.integrated.fontFamily": "Consolas",
