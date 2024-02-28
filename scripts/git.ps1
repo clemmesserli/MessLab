@@ -22,16 +22,13 @@ git config --global init.defaultBranch 'main'
 
 git config --global fetch.prune 'true'
 
-#git config --global github.user 'clemmesserli'
-#git config --global github.token 'token'
-
 git config --global status.short 'true'
 
 git config --global url.'https://github.com/'.insteadOf 'gh:'
 git config --global url.'https://gist.github.com/'.insteadOf 'gist:'
 git config --global url.'https://bitbucket.org/'.insteadOf 'bb:'
 
-git config --global user.email 'clemmesserli@gmail.com'
+git config --global user.email 'clemmesserli@messlabs.com'
 git config --global user.name 'Clem Messerli'
 git config --global user.username 'cmesserli'
 
