@@ -72,13 +72,13 @@ Begin {
 Process {
 	if (-not($PSBoundParameters.ContainsKey('Credential'))) {
 		# Attempt to fetch default cred from Microsoft.PowerShell.SecretStore or prompt for user input if it needs unlocked
-		try { 
+		try {
 			$Credential = (Get-Secret -Vault MessLabs -Name LabAdmin -ErrorAction Stop)
 		} catch {
 			Write-Error "Unable to pre-set credentials.  Aborting lab creation!"
 			break
 		}
-	} 
+	}
 	New-LabDefinition -VmPath $VmPath -Name $LabName -DefaultVirtualizationEngine HyperV
 
 	# define our default user credential
@@ -94,6 +94,31 @@ Process {
 	}
 
 	Install-Lab
+
+	# Copy shared files to all VMs
+	$LabFiles = @(
+		"7z-24.01-x64.exe"
+		"BraveBrowserSetup.exe"
+		"Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
+		"Microsoft.UI.Xaml.2.8.appx"
+		"Microsoft.VCLibs.140.00.UWPDesktop_14.0.30704.0_x64__8wekyb3d8bbwe.appx"
+		"Microsoft.WindowsTerminal_Win10_1.16.10261.0_8wekyb3d8bbwe.msixbundle"
+		"Microsoft.WindowsTerminal_Win11_1.16.10262.0_8wekyb3d8bbwe.msixbundle"
+		#"nmap-7.94-setup.exe"
+		#"Notepad-8.6.4-x64.exe"
+		#"npcap-1.79.exe"
+		#"VisualStudioSetup.exe"
+		#"WinRAR-6.24-x64.exe"
+		#"Wireshark-4.2.3-x64.exe"
+		"vscode.ps1"
+		"powershell.ps1"
+	)
+	$LabFiles | ForEach-Object {
+		Copy-LabFileItem -ComputerName $ComputerName -Path "$labSources\SoftwarePackages\$($_)" -DestinationFolderPath "C:\LabSources"
+	}
+
+	# Install pre-downloaded apps
+	Install-LabSoftwarePackage -ComputerName $ComputerName -LocalPath "C:\LabSources\BraveBrowserSetup.exe" -CommandLine "/Silent /Install" -PassThru
 }
 
 End {
