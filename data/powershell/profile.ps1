@@ -58,7 +58,7 @@ Function Get-MySecret {
     Unlock-MySecret
 	(Get-Secret $Name).getnetworkcredential().password.Trim() | Set-Clipboard
 }
-Function Hosts: { Set-Location 'C:\windows\system32\drivers\etc\hosts' }
+Function Hosts: { Set-Location 'C:\windows\system32\drivers\etc' }
 Function MessKit: { Set-Location 'C:\GitHub\MessKit' }
 Function MessLab: { Set-Location 'C:\GitHub\MessLab' }
 Function Unlock-MySecret {
