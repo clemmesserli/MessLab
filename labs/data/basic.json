@@ -1,0 +1,24 @@
+[
+  {
+    "choco": []
+  },
+  {
+    "winget": []
+  },
+  {
+    "vscode": []
+  },
+  {
+    "modules": []
+  },
+  {
+    "labfiles": [
+      "7z-24.01-x64.exe",
+      "BraveBrowserSetup.exe",
+      "ChromeSetup.exe",
+      "npcap-1.79.exe",
+      "Postman.exe",
+      "Wireshark-4.2.3-x64.exe"
+    ]
+  }
+]
