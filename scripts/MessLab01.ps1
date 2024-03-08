@@ -1,17 +1,55 @@
 [cmdletBinding()]
 param(
     [pscredential]$Credential = (Get-Secret -Vault MessLabs -Name LabAdmin),
-    [string]$ComputerName = "L1PC10"
+    [string]$ComputerName = "L1PC101",
+    [Parameter(Position = 0, HelpMessage = 'The path to a configuration data file')]
+    [ValidateScript({ Test-Path -Path $_ })]
+   	[string]$data = "$PSScriptRoot\labs\data\basic.json"
 )
 
 $LabSession = New-PSSession -Credential $Credential -ComputerName $ComputerName -Name MessLab
 
-#region Install Windows Terminal
+#region WindowsFeatures
+# Invoke-Command -Session $LabSession -ScriptBlock {
+#     dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+#     dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+# }
+#endregion WindowsFeatures
+
+#region AppxPackages
+$SoftwarePackages = (Get-ChildItem "$LabSources\SoftwarePackages" -Include "*.appx", "*.msixbundle" -Recurse).Name
 Invoke-Command -Session $LabSession -ScriptBlock {
-    powershell -noprofile Add-AppxPackage "C:\LabSources\Microsoft.VCLibs.140.00.UWPDesktop_14.0.30704.0_x64__8wekyb3d8bbwe.appx"
-    powershell -noprofile Add-AppxPackage "C:\LabSources\Microsoft.WindowsTerminal_Win10_1.16.10261.0_8wekyb3d8bbwe.msixbundle"
+    foreach ($pckg in $Using:SoftwarePackages) {
+        powershell -noprofile Add-AppxPackage "C:\LabSources\$pckg"
+    }
 }
-#endregion
+#endregion AppxPackages
+
+#region NuGet/PSGet
+Invoke-Command -Session $LabSession -ScriptBlock {
+    $nugetProvider = Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue
+    Install-PackageProvider -Name NuGet -MinimumVersion $($nugetProvider.version.tostring()) -ForceBootstrap -Force
+
+    # Get the latest versions from the PowerShell Gallery
+    Install-Module -Repository PSGallery -Scope AllUsers -Force -Name PowerShellGet
+    Install-Module -Repository PSGallery -Scope AllUsers -Force -Name Microsoft.PowerShell.PSResourceGet
+    Install-Module -Repository PSGallery -Scope AllUsers -Force -Name Pester
+    Install-Module -Repository PSGallery -Scope AllUsers -Force -Name PSReadLine
+}
+#endregion NuGet/PSGet
+
+$data = Get-Content .\data\apps.json | ConvertFrom-Json
+$data = Import-PowerShellDataFile -Path $ConfigurationData -ErrorAction Stop
+
+#region Winget
+Invoke-Command -Session $LabSession -ScriptBlock {
+    # Example: winget search vscode
+    #winget install --source winget --accept-source-agreements --accept-package-agreements --name "Microsoft Visual Studio Code Insiders"
+
+    #winget install --source msstore --accept-source-agreements --accept-package-agreements --name "AutoHotkey Store Edition"
+    winget install --source msstore --accept-source-agreements --accept-package-agreements --name "Power Automate"
+}
+#endregion Winget
 
 #region Chocolately
 Invoke-Command -Session $LabSession -ScriptBlock {
@@ -22,17 +60,12 @@ Invoke-Command -Session $LabSession -ScriptBlock {
 
     # Next grab some choco packages
     $packages = @(
-        #"firefox"
         "git"
-        "googlechrome"
-        #"microsoft-edge"
-        #"notepadplusplus"
-        "postman"
         "powershell-core"
         "vscode"
     )
 
-    for ($i = 0; $i -le $packages.count; $i++) {
+    for ($i = 0; $i -lt $packages.count; $i++) {
         Write-Progress -Activity "Installing Choco Packages" -Status "$i% Complete:" -PercentComplete $i
         choco install $packages[$i] -y
         Start-Sleep -Milliseconds $(Get-Random -Minimum 50 -Maximum 150)
@@ -40,31 +73,69 @@ Invoke-Command -Session $LabSession -ScriptBlock {
 }
 #endregion Chocolatey
 
-#region Install Winget
+#region PSGallery
 Invoke-Command -Session $LabSession -ScriptBlock {
-    # First download and install the winget app and any dependencies
-    powershell -noprofile Add-AppxPackage "C:\LabSources\Microsoft.UI.Xaml.2.8.appx"
-    powershell -noprofile Add-AppxPackage "C:\LabSources\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
-
-    # Next we'll install a few more apps using Winget instead of Choco
-    winget install --source msstore --accept-source-agreements --accept-package-agreements --name "AutoHotkey Store Edition"
-    winget install --source msstore --accept-source-agreements --accept-package-agreements --name "Power Automate"
-    #winget install --source msstore --accept-source-agreements --accept-package-agreements --name "Power BI Desktop"
-    #winget install --source msstore --accept-source-agreements --accept-package-agreements --name "TreeSize Free"
-
-    winget install --source winget --accept-source-agreements --accept-package-agreements --name "Microsoft Visual Studio Code Insiders"
+    $modules = @(
+        "Microsoft.PowerShell.SecretManagement"
+        "Microsoft.PowerShell.SecretStore"
+        "Pester"
+        "PSReadLine"
+        "PSReadlineHistory"
+    )
+    Foreach ($module in $modules) {
+        Write-Host "Installing $module" -ForegroundColor Green
+        Install-Module -Repository 'PSGallery' -Scope AllUsers -AllowClobber -SkipPublisherCheck -Force -Name $module -Verbose
+    }
+    Restart-Computer -Force
 }
-#endregion
+#endregion PSGallery
 
-#region Configure default profile.ps1 & download add-on modules
+Start-Sleep -Seconds 45
+$LabSession = New-PSSession -Credential $credential -ComputerName $ComputerName -Name MessLab
+
+#region VSCode
 Invoke-Command -Session $LabSession -ScriptBlock {
-    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-    Update-Module PowerShellGet -Force
+    $extensions = @(
+        "esbenp.prettier-vscode"                           #Prettier – Code formatter
+        "DavidAnson.vscode-markdownlint"                   #Markdown syntax checker
+        "ms-vscode-remote.remote-wsl"                      #WSL Remote inside Windows VSCode
+        "ms-vscode.PowerShell"                             #PowerShell Syntax Highlighting
+        "vscode-icons-team.vscode-icons"                   #Folder icons
+    )
 
-    #region Initialize PSProfile
+    foreach ($extension in $extensions) {
+        Write-Host "`nInstalling extension [$extension]" -ForegroundColor Yellow
+        code --install-extension $extension
+    }
+
+    $settingsPath = 'C:\Users\LabAdmin\AppData\Roaming\Code\User\settings.json'
+    $data = Invoke-RestMethod 'https://raw.githubusercontent.com/clemmesserli/MessLab/main/data/vscode/settings.json'
+    $data | ConvertTo-Json -Depth 10 | Out-File $settingsPath -Encoding utf8
+}
+#endregion VSCode
+
+#region GIT
+Invoke-Command -Session $LabSession -ScriptBlock {
+    git config --global user.email 'clemmesserli@messlabs.com'
+    git config --global user.name 'Clem Messerli'
+    git config --global user.username 'cmesserli'
+    git config --global url.'https://github.com/'.insteadOf 'gh:'
+    git config --global url.'https://gist.github.com/'.insteadOf 'gist:'
+    git config --global url.'https://bitbucket.org/'.insteadOf 'bb:'
+
+    New-Item -Path C:\github -ItemType Directory -Force
+    Set-Location 'C:\GitHub'
+    git clone gh:clemmesserli/MessKit.git
+}
+#endregion GIT
+
+#region PSProfile
+Invoke-Command -Session $LabSession -ScriptBlock {
+    #download pre-built sample from github
     $data = Invoke-RestMethod 'https://raw.githubusercontent.com/clemmesserli/MessLab/main/data/powershell/profile.ps1'
     $data | Out-File 'C:\github\profile.ps1' -Encoding utf8
 
+    #loop through common PSProfile paths and create a stub or shortcut linking back to our local file above
     $files = @(
         "$($env:onedrive)\Documents\PowerShell\Microsoft.PowerShell_profile.ps1"
         "$($env:onedrive)\Documents\PowerShell\Microsoft.PowerShellISE_profile.ps1"
@@ -80,42 +151,20 @@ Invoke-Command -Session $LabSession -ScriptBlock {
         "$($env:OneDriveConsumer)\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1"
         "$($env:OneDriveConsumer)\Documents\WindowsPowerShell\profile.ps1"
     )
-
     foreach ($file in $files) {
-        try {
-            Set-Content -Value '. C:\github\profile.ps1' -Path "$file" -Force -ErrorAction Stop
-        } catch {
-            Write-Error "$($file) does not exist"
-        }
+        Set-Content -Value '. C:\github\profile.ps1' -Path "$file" -Force -ErrorAction SilentlyContinue
     }
-    #endregion
 }
+#endregion PSProfile
 
+
+#region SecretsMgmt
 Invoke-Command -Session $LabSession -ScriptBlock {
-    #region Install Modules
-    $modules = @(
-        "Microsoft.PowerShell.SecretManagement"
-        "Microsoft.PowerShell.SecretStore"
-        "Pester"
-        "PSReadLine"
-        "PSReadlineHistory"
-    )
-    Foreach ($module in $modules) {
-        Write-Host "Installing $module" -ForegroundColor Green
-        Install-Module -Repository 'PSGallery' -Scope AllUsers -AllowClobber -SkipPublisherCheck -Force -Name $module -Verbose
-    }
-    #endregion
-}
-
-
-
-<#
-
-    #region Setup and Configure Secrets Vault
     #Ref: https://learn.microsoft.com/en-us/powershell/utility-modules/secretmanagement/how-to/using-secrets-in-automation?view=ps-modules
-    #exported to an XML file and encrypted by Windows Data Protection (DPAPI)
+    ## exported to an XML file and encrypted by Windows Data Protection (DPAPI)
+    ## (Protect-CmsMessage leveraging a certificate is what I prefer as it is more portable)
     $securePasswordPath = "C:\LabSources\PSVault.xml"
-    $credential.Password |  Export-Clixml -Path $securePasswordPath
+    $using:credential.Password |  Export-Clixml -Path $securePasswordPath
 
     Register-SecretVault -Name 'PSVault' -ModuleName 'Microsoft.PowerShell.SecretStore' -DefaultVault
     $password = Import-Clixml -Path $securePasswordPath
@@ -138,114 +187,60 @@ Invoke-Command -Session $LabSession -ScriptBlock {
 
     # Get the secret value
     $myAuthToken = Get-Secret -Name "MyAuthToken" -AsPlainText
-    Write-Output "Your Secret Is: [$myAuthToken]" -ForegroundColor Green
-    #endregion
-
-    #region Install PowerShell Universal Server (http://localhost:5000)
-    Install-PSUServer
-    Start-Process http://localhost:5000
-    #endregion
-
-#>
-#endregion
-
-#region Configure default VSCode settings and extensions
-Invoke-Command -Session $LabSession -ScriptBlock {
-    $settingsPath = 'C:\Users\LabAdmin\AppData\Roaming\Code\User\settings.json'
-    $data = Invoke-RestMethod 'https://raw.githubusercontent.com/clemmesserli/MessLab/main/data/vscode/settings.json'
-    $data | ConvertTo-Json -Depth 10 | Out-File $settingsPath -Encoding utf8
-
-    # $extensions = @(
-    #     #"aaron-bond.better-comments"                       #Improve In-Line Comments
-    #     #"andyyaldoo.vscode-json"                           #Json formatter
-    #     #"bierner.emojisense"                               #Emoji intellisense
-    #     #"bitwisecook.irule"                                #F5 Networks iRules
-    #     #"chrmarti.regex"                                   #Preview regex capture within vscode
-    #     #"deerawan.vscode-faker"                            #Random info generator
-    #     #"emilast.logfilehighlighter"                       #Improve LogFile Readability
-    #     "esbenp.prettier-vscode"                           #Prettier – Code formatter
-    #     "DavidAnson.vscode-markdownlint"                   #Markdown syntax checker
-    #     #"dbaeumer.vscode-eslint"                           #Javascript/Typescripy syntax checker
-    #     #"f5devcentral.vscode-f5"                           #The F5 Extension
-    #     #"grapecity.gc-excelviewer"                         #View xls/csv files in vscode
-    #     #"graphql.vscode-graphql"                           #Graphql sytax highlighter
-    #     #"hilleer.yaml-plus-json"                           #Convert YAML <-> JSON
-    #     #"htmlhint.vscode-htmlhint"                         #HTML syntax checker
-    #     #"johnpapa.vscode-peacock"                          #Highlight different workspaces
-    #     #"ms-vscode-remote.remote-ssh"                      #Remote SSH
-    #     "ms-vscode-remote.remote-wsl"                      #WSL Remote inside Windows VSCode
-    #     "ms-vscode.PowerShell"                             #PowerShell Syntax Highlighting
-    #     #"oderwat.indent-rainbow"                           #Vertical indention highlighter
-    #     #"redhat.ansible"                                   #Ansible
-    #     #"redhat.vscode-yaml"                               #YAML
-    #     #"streetsidesoftware.code-spell-checker"            #Code Spell Checker
-    #     "vscode-icons-team.vscode-icons"                   #Folder icons
-    #     #"zignd.html-css-class-completion"                  #CSS intellisense
-    # )
-
-    # #Start-Process "C:\Program Files\Microsoft VS Code\bin\code.cmd" -ArgumentList "--install-extension", "esbenp.prettier-vscode", "--force" -Wait
-    #code --install-extension "esbenp.prettier-vscode"
-
-
-    # foreach ($extension in $extensions) {
-    #     Write-Host "`nInstalling extension [$extension]" -ForegroundColor Yellow
-    #     pwsh code --install-extension $extension "ms-vscode.PowerShell"
-    # }
+    Write-Output "Your Secret Is: [$myAuthToken]"
 }
-#endregion
+#endregion SecretsMgmt
 
-#region Configure default GIT config settings & download repos
+
+
+
+
+
+
+
+
+
+
+
+#region WSL
+# Enable nested virtualization
+Write-Host "Stopping VM to enable nested virtualization support"
+Stop-LabVM -ComputerName $ComputerName -Wait
+
+Get-PSSession | Remove-PSSession
+
+Set-VMProcessor $ComputerName -ExposeVirtualizationExtensions $true
+Write-Host "Starting VM back up..." -ForegroundColor Green
+Start-LabVM -ComputerName $ComputerName -Wait
+
+$LabSession = New-PSSession -Credential $credential -ComputerName $ComputerName -Name MessLab
 Invoke-Command -Session $LabSession -ScriptBlock {
-    git config --global user.email 'clemmesserli@messlabs.com'
-    git config --global user.name 'Clem Messerli'
-    git config --global user.username 'cmesserli'
-    git config --global url.'https://github.com/'.insteadOf 'gh:'
-    git config --global url.'https://gist.github.com/'.insteadOf 'gist:'
-    git config --global url.'https://bitbucket.org/'.insteadOf 'bb:'
-
-    #region Create Local folder and clone repos
-    New-Item -Path C:\github -ItemType Directory -Force
-    Set-Location 'C:\GitHub'
-    git clone gh:clemmesserli/MessKit.git
+    wsl --set-default-version 2
+    wsl --install -d Ubuntu
 }
 #endregion
 
 
 
-# #region Lauch and Close Postman to clear initial startup prompt
-# Invoke-LabCommand -ComputerName $labName -ActivityName "Initialize Postman" -ScriptBlock {
+#region PowerShellUniversal
+# Invoke-Command -Session $LabSession -ScriptBlock {
+#     Install-PSUServer
+#     Start-Process http://localhost:5000
+# }
+#endregion PowerShellUniversal
+
+#region Postman
+# Invoke-Command -Session $LabSession -ScriptBlock {
 #     Start-Process 'C:\Users\LabAdmin\AppData\Local\Postman\postman.exe'
 #     Start-Sleep -Seconds 10
 #     Stop-Process -Name Postman
-# } -PassThru
-# #endregion
-
-# Write-Host "Performing final restart" -ForegroundColor Green
-# Restart-LabVM -ComputerName $labName -Wait
-
-
-#region Install Ubuntu on WSL
-## Enable nested virtualization
-# Write-Host "Stopping VM to enable nested virtualization support"
-# Stop-LabVM -ComputerName $ComputerName -Wait
-
-# Set-VMProcessor $ComputerName -ExposeVirtualizationExtensions $true
-# Write-Host "Starting VM back up..." -ForegroundColor Green
-# Start-LabVM -ComputerName $ComputerName -Wait
-
-# Get-PSSession | Remove-PSSession
-
-# $LabSession = New-PSSession -Credential $credential -ComputerName $ComputerName -Name MessLab
-# Invoke-Command -Session $LabSession -ScriptBlock {
-#     wsl --install -d Ubuntu
 # }
-#endregion
+#endregion Postman
 
+Write-Host "Performing final restart" -ForegroundColor Green
+Restart-LabVM -ComputerName $labName -Wait
 
 Write-Host "Full Lab installed in $($Stopwatch.Elapsed.Minutes) minutes" -ForegroundColor Green
 $Stopwatch.Stop()
 Stop-Transcript
 #Show-LabDeploymentSummary -Detailed
-
-#Location of lab definition files will be 'C:\ProgramData\AutomatedLab'
-# Remove-Lab -Name $labName #-RemoveExternalSwitches
