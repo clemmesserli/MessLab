@@ -47,26 +47,23 @@ param(
 	[ValidateSet(
 		"Windows 10 Enterprise Evaluation",
 		"Windows 11 Enterprise Evaluation",
-		"Windows Server 2012 R2 Standard Evaluation (Server Core Installation)",
-		"Windows Server 2012 R2 Standard Evaluation (Server with a GUI)",
-		"Windows Server 2016 Standard Evaluation",
-		"Windows Server 2016 Standard Evaluation (Desktop Experience)",
-		"Windows Server 2019 Standard Evaluation",
-		"Windows Server 2019 Standard Evaluation (Desktop Experience)",
-		"Windows Server 2022 Standard Evaluation",
 		"Windows Server 2022 Standard Evaluation (Desktop Experience)"
 	)]
 	[ValidateRange(2)]
-	[string[]]$OperatingSystem = @("Windows 10 Enterprise Evaluation", "Windows Server 2016 Standard Evaluation (Desktop Experience)"),
+	[string[]]$OperatingSystem = @("Windows 11 Enterprise Evaluation", "Windows Server 2022 Standard Evaluation (Desktop Experience)"),
 
 	[ValidateRange(1, 6)]
 	[Parameter(HelpMessage = "Enter memory size between 1-6 (in GB):")]
-	[int]$Memory = 6,
+	[int]$Memory = 4,
 
 	[ValidateRange(2)]
-	[string[]]$ComputerName = @("L2PC10", "L2SRV16"),
+	[string[]]$ComputerName = @("L2PC1101", "L2SRV2201"),
 
 	[string]$vmPath = "L:\LabVMs",
+
+	[string]$LocalFolderPath = "$(Get-LabSourcesLocation)",
+
+	[string]$RemoteFolderPath = "C:\LabSources",
 
 	[switch]$AllowInternet
 )
@@ -78,10 +75,13 @@ Begin {
 
 Process {
 	if (-not($PSBoundParameters.ContainsKey('Credential'))) {
-		# Attempt to fetch default cred from Microsoft.PowerShell.SecretStore or prompt for user input if it needs unlocked
-		$Credential = (Get-Secret -Vault MessLabs -Name LabAdmin -ErrorAction Stop)
-	} else {
-		Write-Error "Unable to pre-set credentials.  Aborting lab creation!"
+		# Attempt to fetch default cred from Microsoft.PowerShell.SecretStore if a custom credential was not provided
+		try {
+			$Credential = (Get-Secret -Vault MessLabs -Name LabAdmin -ErrorAction Stop)
+		} catch {
+			Write-Error "Unable to pre-set credentials.  Aborting lab creation!"
+			break
+		}
 	}
 	New-LabDefinition -VmPath $VmPath -Name $LabName -DefaultVirtualizationEngine HyperV
 
@@ -100,9 +100,42 @@ Process {
 	}
 
 	Install-Lab
+
+	Copy-LabFileItem -ComputerName $ComputerName -Path "$LocalFolderPath\SoftwarePackages" -DestinationFolderPath "$RemoteFolderPath"
+	Invoke-LabCommand -ComputerName $ComputerName -ActivityName 'Update Base AppxPackages' -ArgumentList "$RemoteFolderPath" -ScriptBlock {
+		param($LabSources)
+		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.UI.Xaml.appx"
+		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.VCLibs.Desktop.appx"
+		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\winget.msixbundle"
+		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.WindowsTerminal.msixbundle"
+	} -PassThru
+
+	Invoke-LabCommand -ComputerName $ComputerName -ActivityName 'NuGet/PSGet' -ScriptBlock {
+		# set TLS just in case
+		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+		#Bootstrap Nuget provider update  to avoid interactive prompts
+		[void](Install-PackageProvider -Name Nuget -ForceBootstrap -Force)
+
+		# Remove the built-in PSReadline & Pester modules so it will be easier to update both the version and the help later
+		Remove-Item -Path 'C:\Program Files\WindowsPowerShell\Modules\PSReadline' -Recurse -Force -Confirm:$false
+		Remove-Item -Path 'C:\Program Files\WindowsPowerShell\Modules\Pester' -Recurse -Force -Confirm:$false
+
+		# Get the latest versions from the PowerShell Gallery
+		Install-Module -Repository PSGallery -Scope AllUsers -Force -Name PowerShellGet
+		Install-Module -Repository PSGallery -Scope AllUsers -Force -Name Microsoft.PowerShell.PSResourceGet
+		Install-Module -Repository PSGallery -Scope AllUsers -Force -Name Pester
+		Install-Module -Repository PSGallery -Scope AllUsers -Force -Name PSReadLine
+
+		# Install latest version of PowerShell Core
+		Invoke-Expression "& { $(Invoke-RestMethod https://aka.ms/install-powershell.ps1) } -UseMSI -Quiet"
+
+		Update-Help -Force -ErrorAction SilentlyContinue
+	} -PassThru
+
 }
 
 End {
-	Write-Host "Full Lab installed in $($Stopwatch.Elapsed.Minutes) minutes" -ForegroundColor Green
+	Write-Host "Base Lab installed in $($Stopwatch.Elapsed.Minutes) minutes" -ForegroundColor Green
 	$Stopwatch.Stop()
 }
