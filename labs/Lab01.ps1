@@ -49,7 +49,7 @@ param(
 	)]
 	[string]$OperatingSystem = "Windows 10 Enterprise Evaluation",
 
-	[ValidateRange(1, 6)]
+	[ValidateRange(1, 8)]
 	[Parameter(HelpMessage = "Enter memory size between 1-6 (in GB):")]
 	[int]$Memory = 6,
 	[string]$ComputerName = "L1PC1001",
