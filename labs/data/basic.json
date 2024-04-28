@@ -16,8 +16,11 @@
       "7z-24.01-x64.exe",
       "BraveBrowserSetup.exe",
       "ChromeSetup.exe",
+      "nmap-7.94-setup.exe",
+      "Notepad-8.6.4-x64.exe",
       "npcap-1.79.exe",
       "Postman.exe",
+      "VisualStudioSetup.exe",
       "Wireshark-4.2.3-x64.exe"
     ]
   }

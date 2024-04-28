@@ -76,9 +76,33 @@ Process {
 		#Update-Help -Force -ErrorAction SilentlyContinue
 	} -PassThru
 
-	Copy-LabFileItem -ComputerName F5ELK -Path "$LocalFolderPath\CustomPackages\ELK" -DestinationFolderPath "$RemoteFolderPath"
+	Copy-LabFileItem -ComputerName F5ELK -Path "$LocalFolderPath\CustomPackages\ELK\elasticsearch.zip" -DestinationFolderPath "$RemoteFolderPath\CustomPackages\ELK"
+	Invoke-LabCommand -ComputerName F5ELK -ActivityName 'Setting up ElasticSearch' {
+		Expand-Archive -Path "C:\LabSources\CustomPackages\ELK\elasticsearch.zip" -DestinationPath "C:\ELK\"
+		$folder = Get-Item "C:\ELK\elasticsearch-*"
+		Rename-Item -Path $folder.FullName -NewName "elasticsearch"
+	} -PassThru
 
-	Copy-LabFileItem -ComputerName F5WEB -Path "$LocalFolderPath\CustomPackages\ELK\elastic-agent.zip" -DestinationFolderPath "$RemoteFolderPath"
+	Copy-LabFileItem -ComputerName (Get-LabVM) -Path "$LocalFolderPath\CustomPackages\ELK\elastic-agent.zip" -DestinationFolderPath "$RemoteFolderPath\CustomPackages\ELK"
+	Invoke-LabCommand -ComputerName (Get-LabVM) -ActivityName 'Setting up Elastic-Agent' {
+		Expand-Archive -Path "C:\LabSources\CustomPackages\ELK\elastic-agent.zip" -DestinationPath "C:\ELK\"
+		$folder = Get-Item "C:\ELK\elastic-agent*"
+		Rename-Item -Path $folder.FullName -NewName "elastic-agent"
+	} -PassThru
+
+	Copy-LabFileItem -ComputerName F5ELK -Path "$LocalFolderPath\CustomPackages\ELK\kibana.zip" -DestinationFolderPath "$RemoteFolderPath\CustomPackages\ELK"
+	Invoke-LabCommand -ComputerName F5ELK -ActivityName 'Setting up Kibana' {
+		Expand-Archive -Path "C:\LabSources\CustomPackages\ELK\kibana.zip" -DestinationPath "C:\ELK\"
+		$folder = Get-Item "C:\ELK\kibana*"
+		Rename-Item -Path $folder.FullName -NewName "kibana"
+	} -PassThru
+
+
+	Invoke-LabCommand -ComputerName F5ELK -ActivityName 'Installing Elastic Search' {
+		Set-Location "C:\ELK\elasticsearch\bin"
+		powershell .\elasticsearch-service.bat install
+	} -PassThru
+
 
 }
 

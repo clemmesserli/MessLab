@@ -17,7 +17,10 @@ $LabSession = New-PSSession -Credential $Credential -ComputerName $ComputerName 
 #endregion WindowsFeatures
 
 #region AppxPackages
-$SoftwarePackages = (Get-ChildItem "$LabSources\SoftwarePackages" -Include "*.appx", "*.msixbundle" -Recurse).Name
+$SoftwarePackages = Get-ChildItem "$LabSources\SoftwarePackages" -Include "*.appx", "*.msixbundle" -Recurse
+$SoftwarePackages | ForEach-Object -ThrottleLimit 5 -Parallel {
+    Copy-Item -Path $PSItem.FullName -Destination
+}
 Invoke-Command -Session $LabSession -ScriptBlock {
     foreach ($pckg in $Using:SoftwarePackages) {
         powershell -noprofile Add-AppxPackage "C:\LabSources\$pckg"
