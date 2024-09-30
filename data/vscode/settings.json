@@ -1,5 +1,7 @@
 {
-  "diffEditor.hideUnchangedRegions.enabled": true,
+  "breadcrumbs.enabled": true,
+  "breadcrumbs.symbolSortOrder": "position",
+  "diffEditor.ignoreTrimWhitespace": false,
   "editor.accessibilitySupport": "off",
   "editor.autoIndent": "full",
   "editor.bracketPairColorization.enabled": true,
@@ -16,51 +18,46 @@
   "editor.matchBrackets": "always",
   "editor.minimap.enabled": false,
   "editor.mouseWheelZoom": true,
+  "editor.renderControlCharacters": false,
   "editor.renderWhitespace": "boundary",
-  "editor.renderControlCharacters": true,
+  "editor.suggestOnTriggerCharacters": true,
   "editor.tabCompletion": "on",
   "editor.trimAutoWhitespace": true,
   "editor.wordWrap": "off",
   "emmet.triggerExpansionOnTab": true,
-  "explorer.confirmDragAndDrop": false,
-  "explorer.copyRelativePathSeparator": "/",
+  "explorer.confirmDragAndDrop": true,
   "files.associations": {
+    "JenkinsFile": "groovy",
     "ansible.cfg": "ini",
     "hosts": "ini",
-    "yml": "yaml"
+    "**/*.yml": "ansible",
+    "**/*.yaml": "ansible"
   },
   "files.autoGuessEncoding": true,
-  "files.autoSave": "off",
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 3000,
   "files.defaultLanguage": "powershell",
   "files.exclude": {
-    "**/.git": true,
     "**/.svn": true,
     "**/.hg": true,
     "**/CVS": true,
-    "**/.DS_Store": true,
-    "**/Thumbs.db": true
+    "**/.DS_Store": true
   },
   "files.insertFinalNewline": false,
   "files.trimFinalNewlines": true,
   "files.trimTrailingWhitespace": true,
   "git.confirmSync": false,
-  "git.defaultCloneDirectory": "C:\\GitHub",
+  "git.defaultCloneDirectory": "C:\\MyGitHub",
+  "git.path": "%ProgramFiles%\\Git\\bin\\git.exe",
   "javascript.format.insertSpaceBeforeAndAfterBinaryOperators": false,
   "json.format.enable": true,
-  "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
   "[powershell]": {
-    "editor.defaultFormatter": "ms-vscode.powershell",
-    "files.encoding": "utf8bom",
-    "files.autoGuessEncoding": true
+    "editor.defaultFormatter": "ms-vscode.powershell"
   },
-  "powershell.codeFolding.enable": true,
-  "powershell.codeFolding.showLastLine": false,
+  "powershell.codeFolding.showLastLine": true,
   "powershell.codeFormatting.addWhitespaceAroundPipe": true,
   "powershell.codeFormatting.alignPropertyValuePairs": true,
   "powershell.codeFormatting.autoCorrectAliases": true,
-  "powershell.codeFormatting.avoidSemicolonsAsLineTerminators": true,
   "powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationAfterEveryPipeline",
   "powershell.codeFormatting.preset": "OTBS",
   "powershell.codeFormatting.useCorrectCasing": true,
@@ -69,28 +66,58 @@
   "powershell.codeFormatting.whitespaceBeforeOpenBrace": true,
   "powershell.codeFormatting.whitespaceBeforeOpenParen": true,
   "powershell.codeFormatting.whitespaceInsideBrace": true,
+  "powershell.developer.bundledModulesPath": "%ProgramFiles%\\WindowsPowerShell\\Modules",
+  "powershell.developer.editorServicesLogLevel": "Error",
   "powershell.enableProfileLoading": true,
-  "powershell.helpCompletion": "BlockComment",
   "powershell.integratedConsole.focusConsoleOnExecute": false,
   "powershell.integratedConsole.showOnStartup": false,
-  "powershell.integratedConsole.suppressStartupBanner": true,
+  "powershell.pester.codeLens": false,
   "powershell.pester.debugOutputVerbosity": "Detailed",
   "powershell.pester.outputVerbosity": "Normal",
   "powershell.pester.useLegacyCodeLens": false,
+  "powershell.powerShellDefaultVersion": "PowerShell (x64)",
   "powershell.scriptAnalysis.enable": true,
-  "powershell.scriptAnalysis.settingsPath": "C:\\mygithub\\PSScriptAnalyzerSettings.psd1",
-  "powershell.startAutomatically": true,
-  "powershell.sideBar.CommandExplorerVisibility": false,
+  "powershell.scriptAnalysis.settingsPath": "./PSScriptAnalyzerSettings.psd1",
   "prettier.singleQuote": true,
   "prettier.tabWidth": 2,
+  "python.languageServer": "Pylance",
   "redhat.telemetry.enabled": false,
+  "security.workspace.trust.untrustedFiles": "open",
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": true
+  },
   "telemetry.telemetryLevel": "off",
+  "terminal.external.windowsExec": "%USERPROFILE%\\AppData\\Local\\Microsoft\\WindowsApps\\wt.exe",
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "terminal.integrated.fontFamily": "Consolas",
   "terminal.integrated.fontSize": 14,
   "terminal.integrated.fontWeight": "normal",
   "terminal.integrated.gpuAcceleration": "auto",
-  "terminal.external.windowsExec": "wt.exe",
+  "terminal.integrated.profiles.windows": {
+    "PowerShell": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell"
+    },
+    "PowerShell (NoProfile)": {
+      "source": "PowerShell",
+      "args": ["-NoProfile"],
+      "icon": "terminal-powershell"
+    },
+    "Command Prompt": {
+      "path": ["${env:windir}\\System32\\cmd.exe"],
+      "args": [],
+      "icon": "terminal-cmd"
+    },
+    "Git Bash": {
+      "source": "Git Bash"
+    },
+    "Windows PowerShell": {
+      "path": "${env:SystemRoot}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+    }
+  },
+  "terminal.integrated.scrollback": 1000,
+  "terminal.integrated.stickyScroll.enabled": false,
   "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": true,
   "typescript.format.insertSpaceBeforeAndAfterBinaryOperators": false,
   "typescript.format.insertSpaceAfterSemicolonInForStatements": true,
@@ -99,22 +126,67 @@
   "typescript.format.insertSpaceAfterCommaDelimiter": true,
   "vsicons.dontShowNewVersionMessage": true,
   "window.restoreFullscreen": true,
-  "workbench.activityBar.visible": true,
-  "workbench.commandPalette.preserveInput": false,
-  "workbench.colorTheme": "Default Dark Modern",
+  "window.zoomLevel": 2,
+  "workbench.activityBar.location": "default",
+  "workbench.colorCustomizations": {
+    "editorIndentGuide.activeBackground1": "#ff0000"
+  },
+  "workbench.colorTheme": "Visual Studio Dark",
+  "workbench.commandPalette.preserveInput": true,
+  "workbench.editorAssociations": {
+    "*.ipynb": "jupyter-notebook"
+  },
+  "workbench.editor.tabSizing": "fit",
+  "workbench.iconTheme": "vscode-icons",
   "workbench.sideBar.location": "left",
-  "workbench.startupEditor": "none",
-  "[yaml]": {
-    "editor.detectIndentation": false,
+  "workbench.startupEditor": "newUntitledFile",
+  "[ansible]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnType": true,
-    "editor.formatOnSave": true,
+    "editor.detectIndentation": true,
     "editor.insertSpaces": true,
     "editor.tabSize": 2,
+    "editor.quickSuggestions": {
+      "comments": true,
+      "other": true,
+      "strings": true
+    }
+  },
+  "[yaml]": {
+    "editor.autoIndent": "advanced",
+    "editor.defaultFormatter": "redhat.ansible",
+    "editor.formatOnType": true,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
     "outline.showKeys": true
   },
   "yaml.completion": true,
   "yaml.format.enable": true,
   "yaml.format.singleQuote": true,
-  "yaml.maxItemsComputed": 500
+  "yaml.maxItemsComputed": 100,
+  "yaml.schemas": {
+    // match your locally downloaded JSON Schema to the file glob you want to use
+    "C:\\Users\\cmesserli\\.jsonschema\\jsonschema\\ansible-inventory": [
+      "^/inventories/*/*.yml"
+    ],
+    "C:\\Users\\cmesserli\\.jsonschema\\jsonschema\\ansible-playbook": [
+      "^/playbooks/*.yml"
+    ],
+    "C:\\Users\\cmesserli\\.jsonschema\\jsonschema\\ansible-requirements": [
+      "^/inventories/*/*.yml"
+    ],
+    "C:\\Users\\cmesserli\\.jsonschema\\jsonschema\\ansible-meta": [
+      "^/roles/*/meta/*.yml",
+      "^/meta/*.yml"
+    ],
+    "C:\\Users\\cmesserli\\.jsonschema\\jsonschema\\ansible-tasks": [
+      "^/roles/*/tasks/*.yml",
+      "^/tasks/*.yml"
+    ],
+    "C:\\Users\\cmesserli\\.jsonschema\\jsonschema\\ansible-vars": [
+      "^/playbooks/vars/*.yml",
+      "^/roles/*/vars/*.yml"
+    ]
+    // add the settings for collections and inventories as needed...
+  },
+  "yaml.validate": true
 }
