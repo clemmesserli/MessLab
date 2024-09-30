@@ -9,7 +9,7 @@ Install-Module -Repository PSGallery -Name AutomatedLab -Scope AllUsers -Force -
 
 # Download AutomatedLab LabResources from their Github
 ## C:\LabSources is the default location but I wanted to leverage an external SSD drive for greater storage
-$LabDrive = Get-DriveInfo | Where-Object VolumeName -Match 'Lab Data'
+$LabDrive = Get-PSDrive | Where-Object Description -Match 'Lab Data'
 if ($LabDrive) {
 	New-LabSourcesFolder -DriveLetter $LabDrive.DeviceID
 } else {
@@ -24,13 +24,19 @@ $srcPath = "$($env:onedrive)\LabSources\ISOs"
 $dstPath = "$(Get-LabSourcesLocation)\ISOs"
 
 if (Test-Path -Path $dstPath) {
-	# Compare the files
-	$srcFile = Get-FileHash -Path $srcPath
-	$dstFile = Get-FileHash -Path $dstPath
+	$files = Get-ChildItem $srcPath -Recurse -File
+	foreach ($file in $files) {
+		# $file = $files[0]
+		# write-host $file
 
-	if ($srcFile.Hash -ne $dstFile.Hash) {
-		# If the files are not identical, copy the source file to the destination
-		Copy-Item -Path $srcPath -Destination $dstPath
+		# Compare the files
+		$srcFile = Get-FileHash -Path (Join-Path -Path $srcPath -ChildPath $file.name)
+		$dstFile = Get-FileHash -Path (Join-Path -Path $dstPath -ChildPath $file.name)
+
+		if ($srcFile.Hash -ne $dstFile.Hash) {
+			# If the files are not identical, copy the source file to the destination
+			Copy-Item -Path "$($file.FullName)" -Destination "$dstPath"
+		}
 	}
 } else {
 	# If the destination file does not exist, copy the source file to the destination
