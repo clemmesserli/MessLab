@@ -27,12 +27,12 @@ Specifies the path where VM will be stored.
 Specifies whether to create a virtual switch nat to allow hyper-v machine to reach the internet
 
 .EXAMPLE
-.\Lab02.ps1
-Creates a lab definition using all pre-defined param defaults
+.\Lab02.ps1 -AllowInternet
+Creates a custom lab running Windows 11 + Windows Server 2022 Clients 4GB of memory each.
 
 .EXAMPLE
-.\Lab02.ps1 -AllowInternet
-Creates a lab definition using all pre-defined param and also allow direct outbound internet access.
+.\Lab02.ps1 -AllowInternet -OperatingSystem "Windows 10 Enterprise Evaluation", "Windows 11 Enterprise Evaluation" -Memory 6 -ComputerName "L2PC1001", "L2PC1101"
+Creates a custom lab running Windows 10 + Windows 11 Clients 4GB of memory each.
 
 .EXAMPLE
 .\Lab02.ps1 -Credential $myCred -LabName "MyLab" -OperatingSystem "Windows 11 Enterprise Evaluation" -Memory 2 -ComputerName "Client1"
@@ -47,19 +47,20 @@ param(
 	[ValidateSet(
 		"Windows 10 Enterprise Evaluation",
 		"Windows 11 Enterprise Evaluation",
+		"Windows Server 2012 R2 Standard Evaluation (Server with a GUI)",
+		"Windows Server 2016 Standard Evaluation (Desktop Experience)",
+		"Windows Server 2019 Standard Evaluation (Desktop Experience)",
 		"Windows Server 2022 Standard Evaluation (Desktop Experience)"
 	)]
-	[ValidateRange(2)]
 	[string[]]$OperatingSystem = @("Windows 11 Enterprise Evaluation", "Windows Server 2022 Standard Evaluation (Desktop Experience)"),
 
-	[ValidateRange(1, 6)]
-	[Parameter(HelpMessage = "Enter memory size between 1-6 (in GB):")]
+	[ValidateRange(1, 8)]
+	[Parameter(HelpMessage = "Enter memory size between 1-8 (in GB):")]
 	[int]$Memory = 4,
 
-	[ValidateRange(2)]
 	[string[]]$ComputerName = @("L2PC1101", "L2SRV2201"),
 
-	[string]$vmPath = "L:\LabVMs",
+	[string]$VmPath = "L:\LabVMs",
 
 	[string]$LocalFolderPath = "$(Get-LabSourcesLocation)",
 
@@ -104,10 +105,10 @@ Process {
 	Copy-LabFileItem -ComputerName $ComputerName -Path "$LocalFolderPath\SoftwarePackages" -DestinationFolderPath "$RemoteFolderPath"
 	Invoke-LabCommand -ComputerName $ComputerName -ActivityName 'Update Base AppxPackages' -ArgumentList "$RemoteFolderPath" -ScriptBlock {
 		param($LabSources)
-		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.UI.Xaml.appx"
-		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.VCLibs.Desktop.appx"
-		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\winget.msixbundle"
-		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.WindowsTerminal.msixbundle"
+		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.UI.Xaml.2.8.x64.appx"
+		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.VCLibs.x64.14.00.Desktop.appx"
+		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
+		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.WindowsTerminal_1.21.2361.0_8wekyb3d8bbwe.msixbundle"
 	} -PassThru
 
 	Invoke-LabCommand -ComputerName $ComputerName -ActivityName 'NuGet/PSGet' -ScriptBlock {
@@ -132,7 +133,6 @@ Process {
 
 		Update-Help -Force -ErrorAction SilentlyContinue
 	} -PassThru
-
 }
 
 End {

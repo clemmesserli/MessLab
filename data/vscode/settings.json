@@ -20,6 +20,7 @@
   "editor.mouseWheelZoom": true,
   "editor.renderControlCharacters": false,
   "editor.renderWhitespace": "boundary",
+  "editor.stickyScroll.enabled": false,
   "editor.suggestOnTriggerCharacters": true,
   "editor.tabCompletion": "on",
   "editor.trimAutoWhitespace": true,

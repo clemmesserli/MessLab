@@ -27,12 +27,12 @@ Specifies the path where VM will be stored.
 Specifies whether to create a virtual switch nat to allow hyper-v machine to reach the internet
 
 .EXAMPLE
-.\Lab01.ps1
-Creates a lab definition using all pre-defined param defaults
+.\Lab01.ps1 -AllowInternet
+Creates a lab definition using pre-defined param defaults + internet access
 
 .EXAMPLE
-.\Lab01.ps1 -AllowInternet
-Creates a lab definition using all pre-defined param and also allow direct outbound internet access.
+.\Lab01.ps1 -OperatingSystem "Windows 11 Enterprise Evaluation" -ComputerName "L1PC1101" -AllowInternet
+Creates a Win11 client in default lab and also allow direct outbound internet access.
 
 .EXAMPLE
 .\Lab01.ps1 -Credential $myCred -LabName "MyLab" -OperatingSystem "Windows 11 Enterprise Evaluation" -Memory 2 -ComputerName "Client1"
@@ -45,12 +45,15 @@ param(
 	[ValidateSet(
 		"Windows 10 Enterprise Evaluation",
 		"Windows 11 Enterprise Evaluation",
+		"Windows Server 2012 R2 Standard Evaluation (Server with a GUI)",
+		"Windows Server 2016 Standard Evaluation (Desktop Experience)",
+		"Windows Server 2019 Standard Evaluation (Desktop Experience)",
 		"Windows Server 2022 Standard Evaluation (Desktop Experience)"
 	)]
 	[string]$OperatingSystem = "Windows 10 Enterprise Evaluation",
 
 	[ValidateRange(1, 8)]
-	[Parameter(HelpMessage = "Enter memory size between 1-6 (in GB):")]
+	[Parameter(HelpMessage = "Enter memory size between 1-8 (in GB):")]
 	[int]$Memory = 6,
 	[string]$ComputerName = "L1PC1001",
 
@@ -97,17 +100,17 @@ Process {
 	Copy-LabFileItem -ComputerName $ComputerName -Path "$LocalFolderPath\SoftwarePackages" -DestinationFolderPath "$RemoteFolderPath"
 	Invoke-LabCommand -ComputerName $ComputerName -ActivityName 'Update Base AppxPackages' -ArgumentList "$RemoteFolderPath" -ScriptBlock {
 		param($LabSources)
-		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.UI.Xaml.appx"
-		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.VCLibs.Desktop.appx"
-		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\winget.msixbundle"
-		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.WindowsTerminal.msixbundle"
+		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.UI.Xaml.2.8.x64.appx"
+		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.VCLibs.x64.14.00.Desktop.appx"
+		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
+		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.WindowsTerminal_1.21.2361.0_8wekyb3d8bbwe.msixbundle"
 	} -PassThru
 
 	Invoke-LabCommand -ComputerName $ComputerName -ActivityName 'NuGet/PSGet' -ScriptBlock {
 		# set TLS just in case
 		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-		#Bootstrap Nuget provider update  to avoid interactive prompts
+		#Bootstrap Nuget provider update to avoid interactive prompts
 		[void](Install-PackageProvider -Name Nuget -ForceBootstrap -Force)
 
 		# Remove the built-in PSReadline & Pester modules so it will be easier to update both the version and the help later
@@ -123,9 +126,8 @@ Process {
 		# Install latest version of PowerShell Core
 		Invoke-Expression "& { $(Invoke-RestMethod https://aka.ms/install-powershell.ps1) } -UseMSI -Quiet"
 
-		Update-Help -Force
+		Update-Help -Force -ErrorAction SilentlyContinue
 	} -PassThru
-
 }
 
 End {
