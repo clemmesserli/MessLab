@@ -27,7 +27,7 @@ Specifies the path where VM will be stored.
 Specifies whether to create a virtual switch nat to allow hyper-v machine to reach the internet
 
 .EXAMPLE
-.\Lab02.ps1 -AllowInternet
+.\Lab02.ps1 -Credential $MyLabCred -AllowInternet
 Creates a custom lab running Windows 11 + Windows Server 2022 Clients 4GB of memory each.
 
 .EXAMPLE
@@ -35,7 +35,7 @@ Creates a custom lab running Windows 11 + Windows Server 2022 Clients 4GB of mem
 Creates a custom lab running Windows 10 + Windows 11 Clients 4GB of memory each.
 
 .EXAMPLE
-.\Lab02.ps1 -Credential $myCred -LabName "MyLab" -OperatingSystem "Windows 11 Enterprise Evaluation" -Memory 2 -ComputerName "Client1"
+.\Lab02.ps1 -Credential $MyLabCred -LabName "MyLab" -OperatingSystem "Windows 11 Enterprise Evaluation" -Memory 2 -ComputerName "Client1"
 Creates a custom lab definition named "MyLab" with Client1 running Windows 11 Eval and using 2GB of memory.
 #>
 [cmdletBinding()]
@@ -60,7 +60,7 @@ param(
 
 	[string[]]$ComputerName = @("L2PC1101", "L2SRV2201"),
 
-	[string]$VmPath = "L:\LabVMs",
+	[string]$VmPath = "C:\LabVMs",
 
 	[string]$LocalFolderPath = "$(Get-LabSourcesLocation)",
 

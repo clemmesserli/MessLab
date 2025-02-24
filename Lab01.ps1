@@ -27,7 +27,7 @@ Specifies the path where VM will be stored.
 Specifies whether to create a virtual switch nat to allow hyper-v machine to reach the internet
 
 .EXAMPLE
-.\Lab01.ps1 -AllowInternet
+.\Lab01.ps1 -Credential $MyLabCred -AllowInternet
 Creates a lab definition using pre-defined param defaults + internet access
 
 .EXAMPLE
@@ -35,7 +35,7 @@ Creates a lab definition using pre-defined param defaults + internet access
 Creates a Win11 client in default lab and also allow direct outbound internet access.
 
 .EXAMPLE
-.\Lab01.ps1 -Credential $myCred -LabName "MyLab" -OperatingSystem "Windows 11 Enterprise Evaluation" -Memory 2 -ComputerName "Client1"
+.\Lab01.ps1 -Credential $MyLabCred -LabName "MyLab" -OperatingSystem "Windows 11 Enterprise Evaluation" -Memory 2 -ComputerName "Client1"
 Creates a custom lab definition named "MyLab" with Client1 running Windows 11 Eval and using 2GB of memory.
 #>
 [cmdletBinding()]
@@ -57,7 +57,7 @@ param(
 	[int]$Memory = 6,
 	[string]$ComputerName = "L1PC1001",
 
-	[string]$VmPath = "L:\LabVMs",
+	[string]$VmPath = "C:\LabVMs",
 
 	[string]$LocalFolderPath = "$(Get-LabSourcesLocation)",
 
