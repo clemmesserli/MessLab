@@ -40,97 +40,97 @@ Creates a custom lab definition named "MyLab" with Client1 running Windows 11 Ev
 #>
 [cmdletBinding()]
 param(
-	[pscredential]$Credential = (Get-Secret -Vault MessLabs -Name LabAdmin),
-	[string]$LabName = "Lab01",
-	[ValidateSet(
-		"Windows 10 Enterprise Evaluation",
-		"Windows 11 Enterprise Evaluation",
-		"Windows Server 2012 R2 Standard Evaluation (Server with a GUI)",
-		"Windows Server 2016 Standard Evaluation (Desktop Experience)",
-		"Windows Server 2019 Standard Evaluation (Desktop Experience)",
-		"Windows Server 2022 Standard Evaluation (Desktop Experience)"
-	)]
-	[string]$OperatingSystem = "Windows 10 Enterprise Evaluation",
+  [pscredential]$Credential = (Get-Secret -Vault MessLabs -Name LabAdmin),
+  [string]$LabName = 'Lab01',
+  [ValidateSet(
+    'Windows 10 Enterprise Evaluation',
+    'Windows 11 Enterprise Evaluation',
+    'Windows Server 2012 R2 Standard Evaluation (Server with a GUI)',
+    'Windows Server 2016 Standard Evaluation (Desktop Experience)',
+    'Windows Server 2019 Standard Evaluation (Desktop Experience)',
+    'Windows Server 2022 Standard Evaluation (Desktop Experience)'
+  )]
+  [string]$OperatingSystem = 'Windows 10 Enterprise Evaluation',
 
-	[ValidateRange(1, 8)]
-	[Parameter(HelpMessage = "Enter memory size between 1-8 (in GB):")]
-	[int]$Memory = 6,
-	[string]$ComputerName = "L1PC1001",
+  [ValidateRange(1, 8)]
+  [Parameter(HelpMessage = 'Enter memory size between 1-8 (in GB):')]
+  [int]$Memory = 6,
+  [string]$ComputerName = 'L1PC1001',
 
-	[string]$VmPath = "C:\LabVMs",
+  [string]$VmPath = 'L:\LabVMs',
 
-	[string]$LocalFolderPath = "$(Get-LabSourcesLocation)",
+  [string]$LocalFolderPath = "$(Get-LabSourcesLocation)",
 
-	[string]$RemoteFolderPath = "C:\LabSources",
+  [string]$RemoteFolderPath = 'C:\LabSources',
 
-	[switch]$AllowInternet
+  [switch]$AllowInternet
 )
 
 Begin {
-	$Stopwatch = [System.Diagnostics.Stopwatch]::new()
-	$Stopwatch.Start()
+  $Stopwatch = [System.Diagnostics.Stopwatch]::new()
+  $Stopwatch.Start()
 }
 
 Process {
-	if (-not($PSBoundParameters.ContainsKey('Credential'))) {
-		# Attempt to fetch default cred from Microsoft.PowerShell.SecretStore if a custom credential was not provided
-		try {
-			$Credential = (Get-Secret -Vault MessLabs -Name LabAdmin -ErrorAction Stop)
-		} catch {
-			Write-Error "Unable to pre-set credentials.  Aborting lab creation!"
-			break
-		}
-	}
-	New-LabDefinition -VmPath $VmPath -Name $LabName -DefaultVirtualizationEngine HyperV
+  if (-not($PSBoundParameters.ContainsKey('Credential'))) {
+    # Attempt to fetch default cred from Microsoft.PowerShell.SecretStore if a custom credential was not provided
+    try {
+      $Credential = (Get-Secret -Vault MessLabs -Name LabAdmin -ErrorAction Stop)
+    } catch {
+      Write-Error 'Unable to pre-set credentials.  Aborting lab creation!'
+      break
+    }
+  }
+  New-LabDefinition -VmPath $VmPath -Name $LabName -DefaultVirtualizationEngine HyperV
 
-	# define our default user credential
-	Set-LabInstallationCredential -Username $credential.UserName -Password $credential.GetNetworkCredential().Password
+  # define our default user credential
+  Set-LabInstallationCredential -Username $credential.UserName -Password $credential.GetNetworkCredential().Password
 
-	if ($AllowInternet) {
-		if ( ((Get-NetAdapter -Name 'Wi-Fi').status) -eq 'UP') { $nic = "Wi-Fi" } else { $nic = "Ethernet" }
-		Add-LabVirtualNetworkDefinition -Name "External" -HyperVProperties @{ SwitchType = "External"; AdapterName = "$nic" }
+  if ($AllowInternet) {
+    if ( ((Get-NetAdapter -Name 'Wi-Fi').status) -eq 'UP') { $nic = 'Wi-Fi' } else { $nic = 'Ethernet' }
+    Add-LabVirtualNetworkDefinition -Name 'External' -HyperVProperties @{ SwitchType = 'External'; AdapterName = "$nic" }
 
-		Add-LabMachineDefinition -Name $ComputerName -Memory "$($Memory)GB" -OperatingSystem $OperatingSystem -Network "External"
-	} else {
-		Add-LabMachineDefinition -Name $ComputerName -Memory "$($Memory)GB" -OperatingSystem $OperatingSystem
-	}
+    Add-LabMachineDefinition -Name $ComputerName -Memory "$($Memory)GB" -OperatingSystem $OperatingSystem -Network 'External'
+  } else {
+    Add-LabMachineDefinition -Name $ComputerName -Memory "$($Memory)GB" -OperatingSystem $OperatingSystem
+  }
 
-	Install-Lab
+  Install-Lab
 
-	Copy-LabFileItem -ComputerName $ComputerName -Path "$LocalFolderPath\SoftwarePackages" -DestinationFolderPath "$RemoteFolderPath"
-	Invoke-LabCommand -ComputerName $ComputerName -ActivityName 'Update Base AppxPackages' -ArgumentList "$RemoteFolderPath" -ScriptBlock {
-		param($LabSources)
-		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.UI.Xaml.2.8.x64.appx"
-		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.VCLibs.x64.14.00.Desktop.appx"
-		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
-		powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.WindowsTerminal_1.21.2361.0_8wekyb3d8bbwe.msixbundle"
-	} -PassThru
+  Copy-LabFileItem -ComputerName $ComputerName -Path "$LocalFolderPath\SoftwarePackages" -DestinationFolderPath "$RemoteFolderPath"
+  Invoke-LabCommand -ComputerName $ComputerName -ActivityName 'Update Base AppxPackages' -ArgumentList "$RemoteFolderPath" -ScriptBlock {
+    param($LabSources)
+    powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.UI.Xaml.2.8.x64.appx"
+    powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.VCLibs.x64.14.00.Desktop.appx"
+    powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
+    powershell -noprofile Add-AppxPackage "$LabSources\SoftwarePackages\Microsoft.WindowsTerminal_1.21.2361.0_8wekyb3d8bbwe.msixbundle"
+  } -PassThru
 
-	Invoke-LabCommand -ComputerName $ComputerName -ActivityName 'NuGet/PSGet' -ScriptBlock {
-		# set TLS just in case
-		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+  Invoke-LabCommand -ComputerName $ComputerName -ActivityName 'NuGet/PSGet' -ScriptBlock {
+    # set TLS just in case
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-		#Bootstrap Nuget provider update to avoid interactive prompts
-		[void](Install-PackageProvider -Name Nuget -ForceBootstrap -Force)
+    #Bootstrap Nuget provider update to avoid interactive prompts
+    [void](Install-PackageProvider -Name Nuget -ForceBootstrap -Force)
 
-		# Remove the built-in PSReadline & Pester modules so it will be easier to update both the version and the help later
-		Remove-Item -Path 'C:\Program Files\WindowsPowerShell\Modules\PSReadline' -Recurse -Force -Confirm:$false
-		Remove-Item -Path 'C:\Program Files\WindowsPowerShell\Modules\Pester' -Recurse -Force -Confirm:$false
+    # Remove the built-in PSReadline & Pester modules so it will be easier to update both the version and the help later
+    Remove-Item -Path 'C:\Program Files\WindowsPowerShell\Modules\PSReadline' -Recurse -Force -Confirm:$false
+    Remove-Item -Path 'C:\Program Files\WindowsPowerShell\Modules\Pester' -Recurse -Force -Confirm:$false
 
-		# Get the latest versions from the PowerShell Gallery
-		Install-Module -Repository PSGallery -Scope AllUsers -Force -Name PowerShellGet
-		Install-Module -Repository PSGallery -Scope AllUsers -Force -Name Microsoft.PowerShell.PSResourceGet
-		Install-Module -Repository PSGallery -Scope AllUsers -Force -Name Pester
-		Install-Module -Repository PSGallery -Scope AllUsers -Force -Name PSReadLine
+    # Get the latest versions from the PowerShell Gallery
+    Install-Module -Repository PSGallery -Scope AllUsers -Force -Name PowerShellGet
+    Install-Module -Repository PSGallery -Scope AllUsers -Force -Name Microsoft.PowerShell.PSResourceGet
+    Install-Module -Repository PSGallery -Scope AllUsers -Force -Name Pester
+    Install-Module -Repository PSGallery -Scope AllUsers -Force -Name PSReadLine
 
-		# Install latest version of PowerShell Core
-		Invoke-Expression "& { $(Invoke-RestMethod https://aka.ms/install-powershell.ps1) } -UseMSI -Quiet"
+    # Install latest version of PowerShell Core
+    Invoke-Expression "& { $(Invoke-RestMethod https://aka.ms/install-powershell.ps1) } -UseMSI -Quiet"
 
-		Update-Help -Force -ErrorAction SilentlyContinue
-	} -PassThru
+    Update-Help -Force -ErrorAction SilentlyContinue
+  } -PassThru
 }
 
 End {
-	Write-Host "Base Lab installed in $($Stopwatch.Elapsed.Minutes) minutes" -ForegroundColor Green
-	$Stopwatch.Stop()
+  Write-Host "Base Lab installed in $($Stopwatch.Elapsed.Minutes) minutes" -ForegroundColor Green
+  $Stopwatch.Stop()
 }
